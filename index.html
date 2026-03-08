@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sweta Medical Store | Goh, Bihar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { brand: '#ff6f61', brandDark: '#e65c50', success: '#22c55e' } } }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center space-x-2 min-w-max cursor-pointer" onclick="location.reload()">
+                <i class="fas fa-plus-square text-3xl text-brand"></i>
+                <h1 class="text-xl md:text-2xl font-bold tracking-tight text-gray-900">Sweta Medical Store</h1>
+            </div>
+
+            <div class="hidden md:flex flex-1 max-w-xl relative">
+                <input type="text" id="searchInput" placeholder="Search for medicines (e.g. Pan-D, Dolo)..." 
+                    class="w-full border border-gray-300 py-2 px-4 rounded-md focus:outline-none focus:border-brand" 
+                    onkeyup="handleSearch(this.value)">
+                <div id="suggestionsBox" class="absolute top-full left-0 w-full bg-white border shadow-lg hidden z-50 max-h-60 overflow-y-auto"></div>
+            </div>
+
+            <button onclick="openCart()" class="relative p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition">
+                <i class="fas fa-shopping-cart text-xl text-gray-700"></i>
+                <span id="cartCount" class="absolute -top-1 -right-1 bg-brand text-white text-[10px] font-bold px-1.5 rounded-full">0</span>
+            </button>
+        </div>
+        
+        <div class="md:hidden px-4 pb-3 relative">
+            <input type="text" id="mobileSearchInput" placeholder="Search medicines..." 
+                class="w-full border border-gray-300 py-2 px-4 rounded-md focus:outline-none focus:border-brand text-sm" 
+                onkeyup="handleSearch(this.value)">
+            <div id="mobileSuggestionsBox" class="absolute top-full left-4 right-4 bg-white border shadow-lg hidden z-50 max-h-48 overflow-y-auto"></div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-6">
+        <div class="bg-brand rounded-xl p-6 text-white mb-8 flex flex-col md:flex-row items-center justify-between">
+            <div class="mb-4 md:mb-0">
+                <h2 class="text-2xl md:text-3xl font-black mb-2">Fast Home Delivery in Goh!</h2>
+                <p class="text-brand-50 opacity-90">Sahi dawai, Sahi daam. Sweta Medical Store ka bharosa.</p>
+            </div>
+            <div class="bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm">
+                <i class="fas fa-phone-alt mr-2"></i> 9162672683
+            </div>
+        </div>
+
+        <h2 id="sectionTitle" class="text-xl font-bold mb-6 flex items-center gap-2">
+            <i class="fas fa-truck-medical text-brand"></i> Popular Medicines
+        </h2>
+        <div id="medicineGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            </div>
+    </main>
+
+    <div id="cartModal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl relative">
+            <button onclick="closeCart()" class="absolute top-4 right-4 text-gray-400 hover:text-black text-2xl">&times;</button>
+            <h2 class="text-xl font-bold mb-4 border-b pb-2 text-brand">Order Summary</h2>
+            
+            <div id="cartItemsList" class="space-y-3 mb-6 max-h-60 overflow-y-auto pr-2">
+                </div>
+
+            <div class="border-t pt-4 space-y-4">
+                <div class="flex justify-between font-bold text-lg">
+                    <span>Total Amount:</span>
+                    <span id="totalPrice">₹0</span>
+                </div>
+                <input type="text" id="custName" placeholder="Enter Your Name" class="w-full border p-3 rounded-lg outline-none focus:border-brand">
+                <button onclick="sendToWhatsApp()" class="w-full bg-success text-white font-bold py-4 rounded-lg flex items-center justify-center gap-3 hover:bg-green-600 shadow-lg transition">
+                    <i class="fab fa-whatsapp text-2xl"></i> CONFIRM ON WHATSAPP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Medicine Data with Clean Images from High-Quality Sources
+        const medicines = [
+            {name: "Dolo 650 Tablet", price: 30, use: "Fever & Pain", img: "https://www.netmeds.com/images/product-v1/600x600/303977/dolo_650mg_tablet_15_s_0.jpg"},
+            {name: "Pan-D Capsule", price: 199, use: "Gas & Acidity", img: "https://www.netmeds.com/images/product-v1/600x600/341494/pan_d_capsule_15s_0_1.jpg"},
+            {name: "Azee 500 Tablet", price: 119, use: "Antibiotic", img: "https://www.netmeds.com/images/product-v1/600x600/13241/azee_500mg_tablet_3s_0_1.jpg"},
+            {name: "Shelcal 500 Tablet", price: 131, use: "Calcium/Bones", img: "https://www.netmeds.com/images/product-v1/600x600/324395/shelcal_500mg_tablet_15s_0_1.jpg"},
+            {name: "Neurobion Forte", price: 38, use: "B-Vitamin/Nerves", img: "https://www.netmeds.com/images/product-v1/600x600/324388/neurobion_forte_tablet_30s_0_1.jpg"},
+            {name: "Calpol 500 Tablet", price: 16, use: "Mild Fever", img: "https://www.netmeds.com/images/product-v1/600x600/303830/calpol_500mg_tablet_15_s_0.jpg"},
+            {name: "Zerodol SP Tablet", price: 118, use: "Swelling & Pain", img: "https://www.netmeds.com/images/product-v1/600x600/333557/zerodol_sp_tablet_10s_0_1.jpg"},
+            {name: "Omee Capsule", price: 59, use: "Acidity", img: "https://www.netmeds.com/images/product-v1/600x600/45254/omee_capsule_20s_0_1.jpg"},
+            {name: "Digene Gel Syrup", price: 140, use: "Instant Relief", img: "https://www.netmeds.com/images/product-v1/600x600/367352/digene_gel_mixed_fruit_flavour_200ml_0_1.jpg"},
+            {name: "Limcee 500 Chewable", price: 26, use: "Vitamin C", img: "https://www.netmeds.com/images/product-v1/600x600/324381/limcee_500mg_tablet_15s_0_1.jpg"},
+            {name: "Electral ORS Powder", price: 22, use: "Dehydration", img: "https://www.netmeds.com/images/product-v1/600x600/324376/electral_powder_21_8gm_0_1.jpg"},
+            {name: "Evion 400 Capsule", price: 39, use: "Skin & Hair", img: "https://www.netmeds.com/images/product-v1/600x600/15114/evion_400mg_capsule_10s_0_1.jpg"},
+            {name: "Okacet Tablet", price: 18, use: "Allergy/Cold", img: "https://www.netmeds.com/images/product-v1/600x600/44820/okacet_tablet_10s_0_1.jpg"},
+            {name: "Volini Spray (60g)", price: 195, use: "Pain Relief", img: "https://www.netmeds.com/images/product-v1/600x600/344079/volini_pain_relief_spray_60_gm_0.jpg"},
+            {name: "Zifi 200 Tablet", price: 108, use: "Antibiotic", img: "https://www.netmeds.com/images/product-v1/600x600/329806/zifi_200mg_tablet_10s_0_1.jpg"},
+            {name: "Combiflam Tablet", price: 44, use: "Pain Relief", img: "https://www.netmeds.com/images/product-v1/600x600/324373/combiflam_tablet_20s_0_1.jpg"}
+        ];
+
+        let cart = [];
+
+        // Render function
+        function render(list) {
+            const grid = document.getElementById('medicineGrid');
+            grid.innerHTML = list.map((med, index) => `
+                <div class="bg-white rounded-xl border border-gray-100 p-4 flex flex-col items-center text-center shadow-sm hover:shadow-md transition">
+                    <img src="${med.img}" class="h-28 w-28 object-contain mb-3" alt="${med.name}" onerror="this.src='https://via.placeholder.com/150?text=Medicine'">
+                    <h3 class="text-sm font-bold h-10 overflow-hidden leading-tight mb-1">${med.name}</h3>
+                    <p class="text-[10px] text-gray-400 mb-2">${med.use}</p>
+                    <div class="flex justify-between items-center w-full mt-auto pt-2 border-t border-gray-50">
+                        <span class="font-bold text-brand">₹${med.price}</span>
+                        <button onclick="addToCart('${med.name}', ${med.price})" class="bg-brand text-white text-[10px] px-3 py-1.5 rounded-lg font-bold hover:bg-brandDark transition">ADD</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(name, price) {
+            cart.push({name, price});
+            document.getElementById('cartCount').innerText = cart.length;
+            // Small Toast or animation could go here
+        }
+
+        function handleSearch(val) {
+            const query = val.toLowerCase();
+            const suggestions = document.getElementById('suggestionsBox');
+            const mobileSuggestions = document.getElementById('mobileSuggestionsBox');
+            
+            const filtered = medicines.filter(m => m.name.toLowerCase().includes(query) || m.use.toLowerCase().includes(query));
+            
+            if(query.length > 0 && filtered.length > 0) {
+                const html = filtered.slice(0, 5).map(m => `<div class="p-3 border-b hover:bg-gray-50 cursor-pointer text-sm" onclick="selectSuggestion('${m.name}')">${m.name} <span class="text-xs text-gray-400">(${m.use})</span></div>`).join('');
+                suggestions.innerHTML = html;
+                mobileSuggestions.innerHTML = html;
+                suggestions.classList.remove('hidden');
+                mobileSuggestions.classList.remove('hidden');
+            } else {
+                suggestions.classList.add('hidden');
+                mobileSuggestions.classList.add('hidden');
+            }
+            render(filtered);
+        }
+
+        function selectSuggestion(name) {
+            document.getElementById('searchInput').value = name;
+            document.getElementById('mobileSearchInput').value = name;
+            document.getElementById('suggestionsBox').classList.add('hidden');
+            document.getElementById('mobileSuggestionsBox').classList.add('hidden');
+            handleSearch(name);
+        }
+
+        function openCart() {
+            const modal = document.getElementById('cartModal');
+            const list = document.getElementById('cartItemsList');
+            const total = document.getElementById('totalPrice');
+            modal.classList.remove('hidden');
+            
+            if(cart.length === 0) {
+                list.innerHTML = `<div class="text-center py-10 text-gray-400"><i class="fas fa-shopping-basket text-4xl mb-2"></i><p>Cart is empty</p></div>`;
+                total.innerText = "₹0";
+            } else {
+                list.innerHTML = cart.map((item, idx) => `
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                        <span class="text-sm font-medium">${item.name}</span>
+                        <div class="flex items-center gap-4">
+                            <span class="font-bold">₹${item.price}</span>
+                            <button onclick="removeFromCart(${idx})" class="text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+                total.innerText = "₹" + cart.reduce((s, i) => s + i.price, 0);
+            }
+        }
+
+        function removeFromCart(idx) {
+            cart.splice(idx, 1);
+            document.getElementById('cartCount').innerText = cart.length;
+            openCart();
+        }
+
+        function closeCart() {
+            document.getElementById('cartModal').classList.add('hidden');
+        }
+
+        function sendToWhatsApp() {
+            const name = document.getElementById('custName').value;
+            if(!name) { alert("Pehle apna naam likhein!"); return; }
+            if(cart.length === 0) { alert("Cart khali hai!"); return; }
+
+            const shopNumber = "9162672683";
+            let orderItems = cart.map(i => "- " + i.name).join("%0A");
+            let total = cart.reduce((s, i) => s + i.price, 0);
+            
+            let message = `*Naya Order: Sweta Medical Store*%0A%0A*Customer:* ${name}%0A%0A*Medicines:*%0A${orderItems}%0A%0A*Total Bill:* ₹${total}%0A%0A_Kripya delivery bhej dein._`;
+            
+            window.open(`https://wa.me/${shopNumber}?text=${message}`, '_blank');
+        }
+
+        window.onload = () => render(medicines);
+    </script>
+</body>
+</html>
